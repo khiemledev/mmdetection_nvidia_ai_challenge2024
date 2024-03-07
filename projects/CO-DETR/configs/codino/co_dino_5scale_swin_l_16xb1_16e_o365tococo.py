@@ -3,6 +3,12 @@ _base_ = ['co_dino_5scale_r50_8xb2_1x_coco.py']
 pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth'  # noqa
 load_from = 'https://download.openmmlab.com/mmdetection/v3.0/codetr/co_dino_5scale_swin_large_16e_o365tococo-614254c9.pth'  # noqa
 
+data_root = "/data/Competitions/NvidiaAICityChallenge2024/mmdetection/data/fisheye8k_resplit_coco"
+backend_args = None
+dataset_type = "CocoDataset"
+classes = ("bus", "bicycle", "car", "person", "truck")
+num_classes = len(classes)
+
 # model settings
 model = dict(
     backbone=dict(
@@ -44,13 +50,14 @@ train_pipeline = [
                     scales=[(480, 2048), (512, 2048), (544, 2048), (576, 2048),
                             (608, 2048), (640, 2048), (672, 2048), (704, 2048),
                             (736, 2048), (768, 2048), (800, 2048), (832, 2048),
-                            (864, 2048), (896, 2048), (928, 2048), (960, 2048),
-                            (992, 2048), (1024, 2048), (1056, 2048),
-                            (1088, 2048), (1120, 2048), (1152, 2048),
-                            (1184, 2048), (1216, 2048), (1248, 2048),
-                            (1280, 2048), (1312, 2048), (1344, 2048),
-                            (1376, 2048), (1408, 2048), (1440, 2048),
-                            (1472, 2048), (1504, 2048), (1536, 2048)],
+                            # (864, 2048), (896, 2048), (928, 2048), (960, 2048),
+                            # (992, 2048), (1024, 2048), (1056, 2048),
+                            # (1088, 2048), (1120, 2048), (1152, 2048),
+                            # (1184, 2048), (1216, 2048), (1248, 2048),
+                            # (1280, 2048), (1312, 2048), (1344, 2048),
+                            # (1376, 2048), (1408, 2048), (1440, 2048),
+                            # (1472, 2048), (1504, 2048), (1536, 2048),
+                        ],
                     keep_ratio=True)
             ],
             [
@@ -70,21 +77,37 @@ train_pipeline = [
                     scales=[(480, 2048), (512, 2048), (544, 2048), (576, 2048),
                             (608, 2048), (640, 2048), (672, 2048), (704, 2048),
                             (736, 2048), (768, 2048), (800, 2048), (832, 2048),
-                            (864, 2048), (896, 2048), (928, 2048), (960, 2048),
-                            (992, 2048), (1024, 2048), (1056, 2048),
-                            (1088, 2048), (1120, 2048), (1152, 2048),
-                            (1184, 2048), (1216, 2048), (1248, 2048),
-                            (1280, 2048), (1312, 2048), (1344, 2048),
-                            (1376, 2048), (1408, 2048), (1440, 2048),
-                            (1472, 2048), (1504, 2048), (1536, 2048)],
+                            # (864, 2048), (896, 2048), (928, 2048), (960, 2048),
+                            # (992, 2048), (1024, 2048), (1056, 2048),
+                            # (1088, 2048), (1120, 2048), (1152, 2048),
+                            # (1184, 2048), (1216, 2048), (1248, 2048),
+                            # (1280, 2048), (1312, 2048), (1344, 2048),
+                            # (1376, 2048), (1408, 2048), (1440, 2048),
+                            # (1472, 2048), (1504, 2048), (1536, 2048),
+
+                        ],
                     keep_ratio=True)
             ]
         ]),
     dict(type='PackDetInputs')
 ]
 
+# train_dataloader = dict(
+#     batch_size=1, num_workers=1, dataset=dict(pipeline=train_pipeline))
 train_dataloader = dict(
-    batch_size=1, num_workers=1, dataset=dict(pipeline=train_pipeline))
+    batch_size=1,
+    num_workers=4,
+    dataset=dict(
+        type=dataset_type,
+        # classes=classes,
+        pipeline=train_pipeline,
+        data_root=data_root,
+        ann_file="annotations/instances_train.json",
+        data_prefix=dict(img="train/images"),
+        backend_args=backend_args,
+    ),
+)
+
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -96,7 +119,31 @@ test_pipeline = [
                    'scale_factor'))
 ]
 
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+# val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        type=dataset_type,
+        pipeline=test_pipeline,
+        # classes=classes,
+        data_root=data_root,
+        ann_file="annotations/instances_val.json",
+        data_prefix=dict(img="val/images"),
+        backend_args=backend_args,
+    ),
+)
+
+val_evaluator = dict(  # Validation evaluator config
+    type="CocoMetric",  # The coco metric used to evaluate AR, AP, and mAP for detection and instance segmentation
+    # classes=classes,  # Classes to be evaluated
+    ann_file=data_root + "/annotations/instances_val.json",  # Annotation file path
+    metric=[
+        "bbox"
+    ],  # Metrics to be evaluated, `bbox` for detection and `segm` for instance segmentation
+    format_only=False,
+    backend_args=backend_args,
+)
+
 test_dataloader = val_dataloader
 
 optim_wrapper = dict(optimizer=dict(lr=1e-4))
