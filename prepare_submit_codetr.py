@@ -1,7 +1,10 @@
-import json
-from pathlib import Path
-from tqdm import tqdm
 import datetime as dt
+import json
+from argparse import ArgumentParser
+from pathlib import Path
+
+from tqdm import tqdm
+
 
 def get_file_name_by_time(ext="json") -> str:
     name = dt.datetime.utcnow().isoformat()
@@ -19,9 +22,16 @@ def get_image_Id(img_name):
     return imageId
 
 
+def build_args():
+    parser = ArgumentParser()
+    parser.add_argument("json_path", type=str, help="json file")
+    return parser.parse_args()
+
 
 def main():
-    input_json = Path('exp2_visualize/preds')
+    args = build_args()
+
+    input_json = Path(args.json_path)
     output_submit = Path(f'submissions/{get_file_name_by_time()}')
     output_submit.parent.mkdir(parents=True, exist_ok=True)
 
@@ -46,10 +56,8 @@ def main():
 
     with open(output_submit, 'w') as f:
         json.dump(submit, f)
-        # for checking the result
-        # json.dump(submit, f, indent=4)
 
-    print('Done')
+    print("Result saved to ", output_submit)
 
 
 if __name__ == "__main__":
