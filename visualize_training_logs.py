@@ -1,17 +1,24 @@
 import json
-from pathlib import Path
 import shutil
+from argparse import ArgumentParser
+from pathlib import Path
 
 from torch.utils.tensorboard import SummaryWriter
 
 
-def main():
-    # jsonl_file = Path("exp1/20240306_154903/vis_data/20240306_154903.json")
-    # log_dir = Path("tfboard_result_20240306_154903")
-    jsonl_file = Path("cloud_train/mmdetection_nvidia_ai_challenge2024/exp2/20240307_113802/vis_data/20240307_113802.json")
-    log_dir = Path("tfboard_result_20240307_113802")
-    shutil.rmtree(log_dir, ignore_errors=True)
+def build_args():
+    parser = ArgumentParser()
+    parser.add_argument("json_path", type=str, help="json file")
+    parser.add_argument("--output", type=str, default="tfboard_result")
+    return parser.parse_args()
 
+
+def main():
+    args = build_args()
+
+    jsonl_file = Path(args.json_path)
+    log_dir = Path("tfboard_result_" + jsonl_file.stem)
+    shutil.rmtree(log_dir, ignore_errors=True)
 
     # Create a SummaryWriter object
     writer = SummaryWriter(log_dir=log_dir)
@@ -66,4 +73,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
