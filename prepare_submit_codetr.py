@@ -21,7 +21,7 @@ def get_image_Id(img_name):
 
 
 def main():
-    input_json = Path('exp1_visualize/preds')
+    input_json = Path('exp2_visualize/preds')
     output_submit = Path(f'submissions/{get_file_name_by_time()}')
     output_submit.parent.mkdir(parents=True, exist_ok=True)
 
